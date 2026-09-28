@@ -14,7 +14,7 @@ flowchart TB
     worker2["n8n-worker-2<br/>concurrence 5"]
     postgres[("Postgres<br/>workflows et credentials")]
     ollama["Ollama<br/>profil cpu, gpu-nvidia ou gpu-amd"]
-    pull["ollama-pull-llama<br/>télécharge llama3.2"]
+    pull["ollama-pull-llama<br/>télécharge qwen3.5:2b et qwen3.5:9b"]
   end
 
   navigateur -->|"127.0.0.1:5678"| main
@@ -31,9 +31,9 @@ flowchart TB
   hote["127.0.0.1:11434"] --> ollama
 ```
 
-Postgres et Redis restent internes au réseau. Un seul profil Ollama tourne à la fois. `ollama-pull-llama` s’arrête une fois `llama3.2` téléchargé.
+Postgres et Redis restent internes au réseau. Un seul profil Ollama tourne à la fois. `ollama-pull-llama` s’arrête une fois `qwen3.5:2b` et `qwen3.5:9b` téléchargés.
 
-Stack Docker Compose pour un n8n self-hosted en [queue mode](https://docs.n8n.io/deploy/host-n8n/configure-n8n/scaling/enable-queue-mode), avec Postgres, Redis et Ollama. Les modèles tournent dans Docker. Le premier démarrage télécharge `llama3.2`.
+Stack Docker Compose pour un n8n self-hosted en [queue mode](https://docs.n8n.io/deploy/host-n8n/configure-n8n/scaling/enable-queue-mode), avec Postgres, Redis et Ollama. Les modèles tournent dans Docker. Le premier démarrage télécharge `qwen3.5:2b` et `qwen3.5:9b`.
 
 Le main sert l’interface, les timers et les webhooks. Il enfile les exécutions dans Redis. Deux workers (concurrence 5 chacun) les exécutent, y compris les tests lancés depuis l’éditeur. Postgres garde les workflows et les credentials. Redis n’a pas de volume : la file repart de zéro à chaque redémarrage.
 
@@ -80,7 +80,7 @@ Un seul profil à la fois : les trois variantes Ollama portent le même nom de c
 
 Postgres et Redis ne sont pas publiés sur la machine. Ils restent sur le réseau Docker.
 
-Au premier lancement, le conteneur `ollama-pull-llama` télécharge `llama3.2`. L’interface n8n peut être prête avant la fin du téléchargement. Suivre la progression avec `docker compose logs -f ollama-pull-llama-cpu` (ou `ollama-pull-llama-gpu` / `ollama-pull-llama-gpu-amd` selon le profil).
+Au premier lancement, le conteneur `ollama-pull-llama` télécharge `qwen3.5:2b` puis `qwen3.5:9b`. L’interface n8n peut être prête avant la fin du téléchargement. Suivre la progression avec `docker compose logs -f ollama-pull-llama-cpu` (ou `ollama-pull-llama-gpu` / `ollama-pull-llama-gpu-amd` selon le profil).
 
 Dans un workflow, le nœud Ollama joint le service à l’adresse `http://ollama:11434`.
 

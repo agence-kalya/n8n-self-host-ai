@@ -59,7 +59,7 @@ x-init-ollama: &init-ollama
     - OLLAMA_HOST=ollama:11434
   command:
     - "-c"
-    - "until ollama pull llama3.2; do echo 'Ollama pas prêt, nouvel essai dans 5s'; sleep 5; done"
+    - "until ollama pull qwen3.5:2b && ollama pull qwen3.5:9b; do echo 'Ollama pas prêt, nouvel essai dans 5s'; sleep 5; done"
 
 services:
   postgres:
