@@ -1,5 +1,38 @@
 # n8n-self-host-ai
 
+## Architecture
+
+```mermaid
+flowchart TB
+  navigateur["Navigateur"]
+  webhooks["Webhooks"]
+
+  subgraph reseau["Réseau Docker n8n"]
+    main["n8n main<br/>interface, timers, webhooks"]
+    redis[("Redis<br/>file Bull, sans volume")]
+    worker1["n8n-worker-1<br/>concurrence 5"]
+    worker2["n8n-worker-2<br/>concurrence 5"]
+    postgres[("Postgres<br/>workflows et credentials")]
+    ollama["Ollama<br/>profil cpu, gpu-nvidia ou gpu-amd"]
+    pull["ollama-pull-llama<br/>télécharge llama3.2"]
+  end
+
+  navigateur -->|"127.0.0.1:5678"| main
+  webhooks -->|"127.0.0.1:5678"| main
+  main -->|"enfile les exécutions"| redis
+  redis --> worker1
+  redis --> worker2
+  main --> postgres
+  worker1 --> postgres
+  worker2 --> postgres
+  worker1 -->|"http://ollama:11434"| ollama
+  worker2 -->|"http://ollama:11434"| ollama
+  pull -->|"ollama pull"| ollama
+  hote["127.0.0.1:11434"] --> ollama
+```
+
+Postgres et Redis restent internes au réseau. Un seul profil Ollama tourne à la fois. `ollama-pull-llama` s’arrête une fois `llama3.2` téléchargé.
+
 Stack Docker Compose pour un n8n self-hosted en [queue mode](https://docs.n8n.io/deploy/host-n8n/configure-n8n/scaling/enable-queue-mode), avec Postgres, Redis et Ollama. Les modèles tournent dans Docker. Le premier démarrage télécharge `llama3.2`.
 
 Le main sert l’interface, les timers et les webhooks. Il enfile les exécutions dans Redis. Deux workers (concurrence 5 chacun) les exécutent, y compris les tests lancés depuis l’éditeur. Postgres garde les workflows et les credentials. Redis n’a pas de volume : la file repart de zéro à chaque redémarrage.
